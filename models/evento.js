@@ -28,6 +28,14 @@ const Evento = sequelize.define('Evento', {
     type: DataTypes.TEXT,
     allowNull: false
   },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false
+  },
+  vendido: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false
+  },
   id_lugar: {
     type: DataTypes.INTEGER,
     allowNull: false,

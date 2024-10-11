@@ -19,6 +19,10 @@ const Lugar = sequelize.define('Lugar', {
   ciudad: {
     type: DataTypes.STRING,
     allowNull: false
+  },
+  aforo_maximo: {
+    type: DataTypes.INTEGER,
+    allowNull: false
   }
   
 },{
