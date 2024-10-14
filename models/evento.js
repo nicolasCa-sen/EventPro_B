@@ -43,14 +43,6 @@ const Evento = sequelize.define('Evento', {
       model: 'Lugares', 
       key: 'id'         
     }
-  },
-  id_organizacion: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'Organizaciones', 
-      key: 'id'                
-    }
   }
 }, {
   tableName: 'Eventos',

@@ -1,6 +1,5 @@
 const Evento = require('./../models/evento');
-const Lugar = require('./../models/lugar'); // Importa el modelo Lugar
-const Organizacion = require('./../models/organizacion'); // Importa el modelo Organizacion
+const Lugar = require('./../models/lugar'); 
 const moment = require('moment-timezone');
 
 const eventoController = {
@@ -10,10 +9,6 @@ const eventoController = {
             const lugar = await Lugar.findByPk(req.body.id_lugar); 
             if (!lugar) {
                 return res.status(404).json({ "state": false, "message": "Lugar no encontrado" });
-            }
-            const organizacion = await Organizacion.findByPk(req.body.id_organizacion); // Usar findByPk directamente desde el modelo
-            if (!organizacion) {
-                return res.status(404).json({ "state": false, "message": "Organización no encontrada" });
             }
             
             const evento=await Evento.create(req.body);
@@ -62,10 +57,6 @@ const eventoController = {
             }
 
             
-            const organizacion = await Organizacion.findByPk(req.body.id_organizacion); // Usar findByPk directamente desde el modelo
-            if (!organizacion) {
-                return res.status(404).json({ "state": false, "message": "Organización no encontrada" });
-            }
             await evento.update(req.body);
             const fechaInicio = moment.utc(evento.fecha_inicio).tz('America/Bogota').format('YYYY-MM-DD HH:mm:ss');
             const fechaFin = moment.utc(evento.fecha_fin).tz('America/Bogota').format('YYYY-MM-DD HH:mm:ss');
