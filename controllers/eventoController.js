@@ -73,7 +73,22 @@ const eventoController = {
             console.error('Error al actualizar el evento:', error);
             return res.status(500).json({ "state": false, "error": error.message });
         }
+    },
+    delete: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const evento = await Evento.findByPk(id);
+
+            if (!evento) {
+                return res.status(404).json({ "state": false, "message": "Evento no encontrado" });
+            }
+
+            await evento.destroy();
+            return res.status(200).json({ "state": true, "message": "Evento eliminado correctamente" });
+        } catch (error) {
+            console.error('Error al eliminar el evento:', error);
+            return res.status(500).json({ "state": false, "error": error.message });
+        }
     }
 };
-
 module.exports = eventoController;
