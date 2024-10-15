@@ -74,7 +74,7 @@ const eventoController = {
             return res.status(500).json({ "state": false, "error": error.message });
         }
     },
-    delete: async (req, res) => {
+    deleteev: async (req, res) => {
         try {
             const { id } = req.params;
             const evento = await Evento.findByPk(id);
@@ -87,6 +87,19 @@ const eventoController = {
             return res.status(200).json({ "state": true, "message": "Evento eliminado correctamente" });
         } catch (error) {
             console.error('Error al eliminar el evento:', error);
+            return res.status(500).json({ "state": false, "error": error.message });
+        }
+    },
+    select: async (req, res) => {
+        try {
+            const eventos = await Evento.findAll();
+
+            return res.status(200).json({
+                "state": true,
+                "data": eventos
+            });
+        } catch (error) {
+            console.error('Error al obtener los eventos:', error);
             return res.status(500).json({ "state": false, "error": error.message });
         }
     }
