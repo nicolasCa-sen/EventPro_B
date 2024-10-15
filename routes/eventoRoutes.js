@@ -4,13 +4,15 @@ const {
     findById,
     save,
     update,
-    select
+    select,
+    deleteev
 } = require ('./../controllers/eventoController')
 
 
 routes.get("/:id",findById)
 routes.post("/",save)
-routes.get("/", select);
+routes.get("/", select)
 routes.put("/:id",update)
+routes.delete("/:id",deleteev)
 
 module.exports = routes;
