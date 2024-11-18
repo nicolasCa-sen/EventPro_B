@@ -36,11 +36,23 @@ const Evento = sequelize.define('Evento', {
     type: DataTypes.BOOLEAN,
     allowNull: false
   },
+  categoria: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
   id_lugar: {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
       model: 'Lugares', 
+      key: 'id'         
+    }
+  },
+  id_creador: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Usuarios', 
       key: 'id'         
     }
   }

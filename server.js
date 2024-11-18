@@ -7,7 +7,7 @@ const cors=require('cors')
 require('./drivers/connect_db')
 
 //setters
-app.set('PORT',process.env.PORT || 3000 )
+app.set('PORT',process.env.PORT || 4000 )
 
 //middlewares
 app.use(express.json())
@@ -15,5 +15,8 @@ app.use(cors());
 app.use("/lugar", require('./routes/lugarRoutes'))
 app.use("/organizacion", require('./routes/organizacionRoutes'))
 app.use("/evento",require('./routes/eventoRoutes'))
-//app.use("/usuario",require('./routes/usuario'))
+app.use("/usuario",require('./routes/usuarioRoutes'))
+app.use("/admin",require('./routes/adminRoutes'))
+app.use("/organizador",require('./routes/organizadorRoutes'))
+app.use("/entrada",require('./routes/entradaRoutes'))
 app.listen(app.get('PORT'),()=>console.log(`Sever Listen to Port ${app.get('PORT')}`))

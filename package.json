@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
     "express": "^4.20.0",
     "moment-timezone": "^0.5.46",
     "nodemon": "^3.1.4",
