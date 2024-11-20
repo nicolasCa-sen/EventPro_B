@@ -6,27 +6,31 @@ const usuarioController = {
     
     registrarse: async (req, res) => {
         try {
-            if(req.body.rol=== rolNecesario){
-                req.body.numero_cuenta=null;
-                req.body.numero_credencial=null;
-                req.body.id_organizacion=null;
-                const fecha_nacimiento = new Date(req.body.fecha_nacimiento);
-                const edad = differenceInYears(new Date(), fecha_nacimiento);
-
-                if (edad < 18) {
-                    return res.status(400).json({ "state": false, "error": "Debe ser mayor de edad para registrarse." });
-                }              
-                const usuario = await Persona.create(req.body);
-                return res.status(200).json({ "state": true, "data": usuario });
-            }else{
-                return res.status(400).json({ "state": false, "error": 'rol no valido' });  
+            const { rol } = req.body;  // Obtén el rol desde el cuerpo de la solicitud
+            
+            if(rol !== 'Usuario') {  // Asegúrate de que el rol recibido sea válido
+                return res.status(400).json({ "state": false, "error": 'Rol no válido' });
             }
- 
+   
+            req.body.numero_cuenta = null;
+            req.body.numero_credencial = null;
+            req.body.id_organizacion = null;
+   
+            const fecha_nacimiento = new Date(req.body.fecha_nacimiento);
+            const edad = differenceInYears(new Date(), fecha_nacimiento);
+   
+            if (edad < 18) {
+                return res.status(400).json({ "state": false, "error": "Debe ser mayor de edad para registrarse." });
+            }
+   
+            const usuario = await Persona.create(req.body);
+            return res.status(200).json({ "state": true, "data": usuario });
         } catch (error) {
             console.error('Error al Registrar el usuario:', error);
             return res.status(500).json({ "state": false, "error": error.message });
         }
     },
+   
 
     findById: async (req, res) => {
         try {
