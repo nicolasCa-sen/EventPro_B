@@ -1,4 +1,5 @@
-const express = require('express')
+const express = require('express');
+const path = require('path');
 const {Lugar,Evento,Organizacion}=require('./models/asociacion')
 const app = express()
 const cors=require('cors')
@@ -12,6 +13,9 @@ app.set('PORT',process.env.PORT || 4000 )
 //middlewares
 app.use(express.json())
 app.use(cors());
+app.use('/uploads', express.static(path.join(__dirname, './uploads')));
+app.use(express.urlencoded({ extended: true }));
+
 app.use("/lugar", require('./routes/lugarRoutes'))
 app.use("/organizacion", require('./routes/organizacionRoutes'))
 app.use("/evento",require('./routes/eventoRoutes'))
