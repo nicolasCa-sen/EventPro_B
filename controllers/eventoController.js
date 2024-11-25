@@ -71,7 +71,7 @@ const eventoController = {
 },
 
     
-    
+
 
     findById: async (req, res) => {
         try {
@@ -97,40 +97,79 @@ const eventoController = {
             return res.status(500).json({ "state": false, "error": error.message });
         }
     },
+   
+
     update: async (req, res) => {
-        try {
-            const { id } = req.params;
-            const evento = await Evento.findByPk(id);
-
-            if (!evento) {
-                return res.status(404).json({ "state": false, "message": "Evento no encontrado" });
+        upload.single('imagen_principal')(req, res, async (err) => {
+            if (err) {
+                console.error('Error al subir la imagen:', err);
+                return res.status(400).json({ state: false, message: err.message });
             }
-            const lugar = await Lugar.findByPk(req.body.id_lugar); 
-            if (!lugar) {
-                return res.status(404).json({ "state": false, "message": "Lugar no encontrado" });
+    
+            try {
+                const { id } = req.params;
+                const evento = await Evento.findByPk(id);
+    
+                if (!evento) {
+                    return res.status(404).json({ state: false, message: "Evento no encontrado" });
+                }
+    
+                // Validar si el lugar existe
+                const lugar = await Lugar.findByPk(req.body.id_lugar);
+                if (!lugar) {
+                    return res.status(404).json({ state: false, message: "Lugar no encontrado" });
+                }
+    
+                // Validar si el creador existe y tiene permisos adecuados
+                const creador = await Persona.findByPk(req.body.id_creador);
+                if (!creador || creador.rol === "Usuario") {
+                    return res.status(404).json({ state: false, message: "Creador del evento no encontrado" });
+                }
+    
+                // Preparar datos para actualizar
+                const datosActualizados = {
+                    nombre: req.body.nombre,
+                    descripcion: req.body.descripcion,
+                    fecha_inicio: req.body.fecha_inicio,
+                    fecha_fin: req.body.fecha_fin,
+                    id_lugar: req.body.id_lugar,
+                    activo: req.body.activo === 'true',
+                    vendido: req.body.vendido === 'true',
+                };
+    
+                // Si se cargó una nueva imagen, actualizar la URL
+                if (req.file) {
+                    datosActualizados.imagen_principal = `/uploads/${req.file.filename.replace(/\s+/g, '_')}`;
+                }
+    
+                // Actualizar el evento
+                await evento.update(datosActualizados);
+    
+                // Formatear fechas para la respuesta
+                const fechaInicio = moment
+                    .utc(evento.fecha_inicio)
+                    .tz('America/Bogota')
+                    .format('YYYY-MM-DD HH:mm:ss');
+                const fechaFin = moment
+                    .utc(evento.fecha_fin)
+                    .tz('America/Bogota')
+                    .format('YYYY-MM-DD HH:mm:ss');
+    
+                return res.status(200).json({
+                    state: true,
+                    data: {
+                        ...evento.toJSON(),
+                        fecha_inicio: fechaInicio,
+                        fecha_fin: fechaFin,
+                    },
+                });
+            } catch (error) {
+                console.error('Error al actualizar el evento:', error);
+                return res.status(500).json({ state: false, error: error.message });
             }
-            const creador =await Persona.findByPk(req.body.id_creador);
-            if (!creador || creador.rol==="Usuario") {
-                return res.status(404).json({ "state": false, "message": "Creador del evento no encontrado" });
-            }
-            
-            await evento.update(req.body);
-            const fechaInicio = moment.utc(evento.fecha_inicio).tz('America/Bogota').format('YYYY-MM-DD HH:mm:ss');
-            const fechaFin = moment.utc(evento.fecha_fin).tz('America/Bogota').format('YYYY-MM-DD HH:mm:ss');
-
-            return res.status(200).json({ 
-                "state": true, 
-                "data": {
-                    ...evento.toJSON(),
-                    fecha_inicio: fechaInicio,
-                    fecha_fin: fechaFin
-                } 
-            });
-        } catch (error) {
-            console.error('Error al actualizar el evento:', error);
-            return res.status(500).json({ "state": false, "error": error.message });
-        }
+        });
     },
+    
     deleteev: async (req, res) => {
         try {
             const { id } = req.params;

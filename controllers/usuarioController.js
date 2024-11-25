@@ -3,7 +3,8 @@ const { differenceInYears } = require('date-fns');
 rolNecesario="Usuario";
 
 const usuarioController = {
-    
+
+ 
     registrarse: async (req, res) => {
         try {
             const { rol } = req.body;  // Obtén el rol desde el cuerpo de la solicitud
@@ -30,7 +31,43 @@ const usuarioController = {
             return res.status(500).json({ "state": false, "error": error.message });
         }
     },
-   
+    
+
+
+    select: async (req, res) => {
+        try {
+            // Buscar todos los usuarios con el rol 'Usuario'
+            const usuarios = await Persona.findAll({
+                where: { rol: 'Usuario' }, // Filtrar por rol 'Usuario'
+                attributes: {
+                    exclude: ['contraseña', 'telefono', 'numero_cuenta', 'numero_credencial'] // Excluir campos privados
+                }
+            });
+    
+            // Verificar si se encontraron usuarios
+            if (usuarios.length === 0) {
+                return res.status(404).json({ 
+                    "state": false, 
+                    "message": "No se encontraron usuarios." 
+                });
+            }
+    
+            // Enviar respuesta exitosa con los usuarios encontrados
+            return res.status(200).json({
+                "state": true,
+                "data": usuarios
+            });
+        } catch (error) {
+            console.error('Error al obtener los usuarios:', error);
+            return res.status(500).json({ 
+                "state": false, 
+                "error": error.message 
+            });
+        }
+    },
+    
+    
+
 
     findById: async (req, res) => {
         try {

@@ -6,6 +6,7 @@ const {
     update,
     select,
     deleteev
+   
 } = require ('./../controllers/eventoController')
 
 
@@ -14,5 +15,6 @@ routes.post("/",save)
 routes.get("/", select)
 routes.put("/:id",update)
 routes.delete("/:id",deleteev)
+
 
 module.exports = routes;
