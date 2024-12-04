@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../drivers/connect_db'); 
-const Evento = require('./evento')
+
 const Organizacion = sequelize.define('Organizacion', {
   id: {
     type: DataTypes.INTEGER,

@@ -1,4 +1,5 @@
 const Organizacion=require('./../models/organizacion')
+const Persona =require('./../models/persona')
 
 const organizacionController = {
     save: async (req, res) => {
@@ -49,6 +50,46 @@ const organizacionController = {
             return res.status(500).json({ "state": false, "error": error.message });
         }
     },
+    select: async (req, res) => {
+        try {
+            const organizaciones = await Organizacion.findAll();
+
+            return res.status(200).json({
+                "state": true,
+                "data": organizaciones
+            });
+        } catch (error) {
+            console.error('Error al obtener las organizaciones:', error);
+            return res.status(500).json({ "state": false, "error": error.message });
+        }
+    },
+    deleteor: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const organizacion = await Organizacion.findByPk(id);
+
+            if (!organizacion) {
+                return res.status(404).json({ "state": false, "message": "Organizacion no encontrada" });
+            }
+        
+            const organizadoresAsociados = await Persona.findOne({
+                where: {
+                    id_organizacion: id,
+                }
+            });
+    
+            if (organizadoresAsociados) {
+                return res.status(400).json({ 
+                    "state": false, 
+                    "message": "No se puede eliminar una organizacion asociada con organizadores." });
+            }
+            await organizacion.destroy();
+            return res.status(200).json({ "state": true, "message": "Organizacion eliminada correctamente" });
+        } catch (error) {
+            console.error('Error al eliminar la organizacion:', error);
+            return res.status(500).json({ "state": false, "error": error.message });
+        }
+    }
 
 };
 

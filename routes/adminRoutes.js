@@ -4,6 +4,6 @@ const {
     cambioCredenciales
 } = require ('./../controllers/administradorController')
 
-routes.put("/:id",cambioCredenciales)
+routes.put("/",cambioCredenciales)
 
 module.exports = routes;

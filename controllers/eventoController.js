@@ -1,10 +1,51 @@
 const Evento = require('./../models/evento');
 const Lugar = require('./../models/lugar');
 const Persona = require('./../models/persona');
+const Entrada =require('./../models/entrada')
 const moment = require('moment-timezone');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+
+const calculoentradas = async (id_lugar, fecha_inicio, fecha_fin) => {
+    try {
+        // Validar que las fechas sean válidas
+        if (!fecha_inicio || !fecha_fin) {
+            throw new Error("Fechas de inicio y fin son requeridas.");
+        }
+
+        const fechaInicio = new Date(fecha_inicio);
+        const fechaFin = new Date(fecha_fin);
+
+        if (isNaN(fechaInicio) || isNaN(fechaFin)) {
+            throw new Error("Formato de fecha inválido.");
+        }
+
+        const lugar = await Lugar.findByPk(id_lugar);
+        const aforo_max= parseInt(lugar.aforo_maximo);
+        if (!lugar) {
+            throw new Error("Evento no encontrado.");
+        }
+
+        // Calcular la duración en días
+        let totalentradas=0;
+        const duracion = Math.ceil((fechaFin - fechaInicio) / (1000 * 60 * 60 * 24));
+        if(duracion > 1){
+            const entradadias= ((duracion - 1) * 1.8);
+            totalentradas=entradadias *aforo_max;
+        }else{
+            totalentradas = duracion * aforo_max;
+        }
+        return {
+            totalentradas
+        };
+    } catch (error) {
+        console.error("Error al calcular el nuemro de entradas totales:", error.message);
+        throw error;  
+    }
+};
+
+
 // Configuración de Multer
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -40,6 +81,17 @@ const eventoController = {
         }
 
         try {
+            const { cantidad_entradas, precio } = req.params; 
+            const cantidadEntradas = parseInt(cantidad_entradas, 10);
+            const precioEntradas = precio;
+
+            if (isNaN(cantidadEntradas) || cantidadEntradas <= 0) {
+                return res.status(400).json({ state: false, message: "Cantidad de entradas inválida" });
+            }
+
+            if (isNaN(precioEntradas) || precioEntradas <= 0) {
+                return res.status(400).json({ state: false, message: "Precio inválido" });
+            }
             const lugar = await Lugar.findByPk(req.body.id_lugar);
             const creador = await Persona.findByPk(req.body.id_creador);
 
@@ -59,8 +111,29 @@ const eventoController = {
                 ...req.body,
                 imagen_principal: imagenPrincipal, // Guardamos la URL corregida
             };
+            if (req.body.fecha_inicio>req.body.fecha_fin) {
+                return res.status(500).json({ state: false, message: "La fecha de inicio no puede ser posterior a la fecha de fin" });
+            }
+            const total=await calculoentradas(req.body.id_lugar,req.body.fecha_inicio,req.body.fecha_fin);
+            if(cantidadEntradas>total.totalentradas){
+                return res.status(500).json({ state: false, message: "el aforo maximo es de " + total.totalentradas });
+            }
 
+            const entradas = [];
             const evento = await Evento.create(eventoData);
+            for (let i = 0; i < cantidadEntradas; i++) {
+                entradas.push({
+                    precio: precioEntradas,
+                    disponible: true,
+                    numero_ticket: i+1,
+                    fecha_emision: null,
+                    numero_recibo:null,
+                    id_usuario: null,
+                    id_evento: evento.id, 
+                });
+            }
+
+            await Entrada.bulkCreate(entradas);
 
             return res.status(200).json({ state: true, data: evento });
         } catch (error) {
@@ -69,9 +142,6 @@ const eventoController = {
         }
     });
 },
-
-    
-
 
     findById: async (req, res) => {
         try {
@@ -178,6 +248,19 @@ const eventoController = {
             if (!evento) {
                 return res.status(404).json({ "state": false, "message": "Evento no encontrado" });
             }
+            
+            const fechaActual = new Date();
+            const fechaFinEvento = new Date(evento.fecha_fin);
+
+            if (fechaFinEvento >= fechaActual) {
+                return res.status(400).json({ 
+                    state: false, 
+                    message: "No se puede eliminar un evento que aún no ha finalizado." 
+                });
+            }
+
+            await Entrada.destroy({ where: { id_evento: id } });
+
 
             await evento.destroy();
             return res.status(200).json({ "state": true, "message": "Evento eliminado correctamente" });

@@ -1,4 +1,5 @@
 const Persona=require('./../models/persona');
+const Solicitud=require('./../models/solicitud');
 const { differenceInYears } = require('date-fns');
 rolNecesario="Usuario";
 
@@ -31,8 +32,32 @@ const usuarioController = {
             return res.status(500).json({ "state": false, "error": error.message });
         }
     },
-    
+    solicitudCredencial: async(req,res)=>{
+        try {
+            const { id_usuario, id_organizacion } = req.body;
+            const usuario = await Persona.findByPk(id_usuario);
 
+            if (!usuario) {
+                return res.status(404).json({
+                    state: false,
+                    message: "Usuario no encontrado",
+                });
+            }
+            const nuevaSolicitud = await Solicitud.create({
+                id_usuario,
+                id_organizacion,
+            });
+
+            return res.status(200).json({
+                state: true,
+                message: "Solicitud realizada",
+                data: nuevaSolicitud,
+            });
+        } catch (error) {
+            console.error('Error en la solicitud de cambio de credenciales:', error);
+            return res.status(500).json({ "state": false, "error": error.message });
+        }
+    },
 
     select: async (req, res) => {
         try {
@@ -66,9 +91,6 @@ const usuarioController = {
         }
     },
     
-    
-
-
     findById: async (req, res) => {
         try {
             
@@ -104,6 +126,22 @@ const usuarioController = {
             return res.status(500).json({ "state": false, "error": error.message });
         }
     },
+    deleteus: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const usuario = await Persona.findByPk(id);
+
+            if (!usuario || usuario.rol!== "Usuario") {
+                return res.status(404).json({ "state": false, "message": "Usuario no encontrado" });
+            }
+         
+            await usuario.destroy();
+            return res.status(200).json({ "state": true, "message": "Usuario eliminado correctamente" });
+        } catch (error) {
+            console.error('Error al eliminar el usuario:', error);
+            return res.status(500).json({ "state": false, "error": error.message });
+        }
+    }
 
 };
 

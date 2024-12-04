@@ -11,7 +11,7 @@ const {
 
 
 routes.get("/:id",findById)
-routes.post("/",save)
+routes.post("/:cantidad_entradas/:precio",save)
 routes.get("/", select)
 routes.put("/:id",update)
 routes.delete("/:id",deleteev)

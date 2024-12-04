@@ -26,7 +26,7 @@ const Evento = sequelize.define('Evento', {
   },
   imagen_principal: {
     type: DataTypes.TEXT,
-    allowNull: false
+    allowNull: true
   },
   activo: {
     type: DataTypes.BOOLEAN,

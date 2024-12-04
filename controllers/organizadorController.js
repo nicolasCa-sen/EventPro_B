@@ -44,6 +44,45 @@ const organizadorController = {
             return res.status(500).json({ "state": false, "error": error.message });
         }
     },
+    select: async (req, res) => {
+        try {
+
+            const organizadores = await Persona.findAll({
+                where: {
+                    rol: rolNecesario
+                }
+            });
+    
+            if (organizadores.length === 0) {
+                return res.status(404).json({ state: false, message: "No se encontraron organizadores" });
+            }
+
+            return res.status(200).json({
+                "state": true,
+                "data": organizadores
+            });
+        } catch (error) {
+            console.error('Error al obtener los organizadores:', error);
+            return res.status(500).json({ "state": false, "error": error.message });
+        }
+    },
+    deleteuor: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const organizador = await Persona.findByPk(id);
+
+            if (!organizador || organizador.rol!== rolNecesario) {
+                return res.status(404).json({ "state": false, "message": "Organizador no encontrado" });
+            }
+
+         
+            await organizador.destroy();
+            return res.status(200).json({ "state": true, "message": "Organizador eliminado correctamente" });
+        } catch (error) {
+            console.error('Error al eliminar el organizador:', error);
+            return res.status(500).json({ "state": false, "error": error.message });
+        }
+    }
 
 };
 

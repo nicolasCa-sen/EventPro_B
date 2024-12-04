@@ -12,7 +12,7 @@ const Entrada = sequelize.define('Entrada', {
     type: DataTypes.DOUBLE,
     allowNull: false
   },
-  asiento: {
+  numero_ticket: {
     type: DataTypes.STRING,
     allowNull: false
   },
@@ -25,7 +25,7 @@ const Entrada = sequelize.define('Entrada', {
     allowNull: true
   },
   numero_recibo: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     allowNull: true
   },
   id_evento: {
