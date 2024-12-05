@@ -74,74 +74,108 @@ const upload = multer({
 });
 const eventoController = {
     save: async (req, res) => {
-    upload.single('imagen_principal')(req, res, async (err) => {
-        if (err) {
-            console.error('Error al subir la imagen:', err);
-            return res.status(400).json({ state: false, message: err.message });
-        }
-
-        try {
-            const { cantidad_entradas, precio } = req.params; 
-            const cantidadEntradas = parseInt(cantidad_entradas, 10);
-            const precioEntradas = precio;
-
-            if (isNaN(cantidadEntradas) || cantidadEntradas <= 0) {
-                return res.status(400).json({ state: false, message: "Cantidad de entradas inválida" });
+        // Subida de imagen
+        upload.single('imagen_principal')(req, res, async (err) => {
+            if (err) {
+                console.error('Error al subir la imagen:', err);
+                return res.status(400).json({ state: false, message: err.message });
             }
-
-            if (isNaN(precioEntradas) || precioEntradas <= 0) {
-                return res.status(400).json({ state: false, message: "Precio inválido" });
+    
+            try {
+                // Verificar los valores recibidos
+                console.log('Datos recibidos en req.body:', req.body);
+                console.log('Cantidad de entradas recibida:', req.params.cantidad_entradas);
+                console.log('Precio recibido:', req.params.precio);
+    
+                const cantidadEntradas = parseInt(req.params.cantidad_entradas, 10);
+                const precioEntradas = parseFloat(req.params.precio);
+    
+                console.log('Cantidad de entradas convertida a número:', cantidadEntradas);
+                console.log('Precio de entradas:', precioEntradas);
+    
+                // Verificar si la imagen ha sido subida
+                if (req.file) {
+                    console.log('Datos de la imagen recibida:', req.file);
+                    // Esto mostrará detalles de la imagen que se ha subido, como:
+                    // - req.file.filename: nombre del archivo
+                    // - req.file.path: ruta del archivo en el servidor
+                    // - req.file.mimetype: tipo MIME de la imagen (por ejemplo, image/jpeg)
+                    // - req.file.size: tamaño del archivo en bytes
+                } else {
+                    console.log('No se recibió ninguna imagen');
+                }
+    
+                // Verificar si el lugar y creador existen
+                const lugar = await Lugar.findByPk(req.body.id_lugar);
+                const creador = await Persona.findByPk(req.body.id_creador);
+    
+                if (!lugar) {
+                    return res.status(404).json({ state: false, message: "Lugar no encontrado" });
+                }
+    
+                if (!creador) {
+                    return res.status(404).json({ state: false, message: "Creador no encontrado" });
+                }
+    
+                // Eliminar los espacios y asegurar que no haya doble slash en la URL
+                const imagenPrincipal = req.file
+                    ? `/uploads/${req.file.filename.replace(/\s+/g, '_').replace(/^\/+/, '')}`
+                    : null;
+    
+                if (!imagenPrincipal) {
+                    return res.status(400).json({ state: false, message: "Se requiere una imagen principal" });
+                }
+    
+                // Verificar las fechas
+                const fechaInicio = new Date(req.body.fecha_inicio);
+                const fechaFin = new Date(req.body.fecha_fin);
+                if (fechaInicio > fechaFin) {
+                    return res.status(400).json({ state: false, message: "La fecha de inicio no puede ser posterior a la fecha de fin" });
+                }
+    
+                // Lógica de cálculo de total de entradas disponibles según la fecha y lugar
+                const total = await calculoentradas(req.body.id_lugar, req.body.fecha_inicio, req.body.fecha_fin);
+    
+                if (cantidadEntradas > total.totalentradas) {
+                    return res.status(400).json({ state: false, message: "El aforo máximo es de " + total.totalentradas });
+                }
+    
+                // Preparar los datos del evento
+                const eventoData = {
+                    ...req.body,
+                    imagen_principal: imagenPrincipal,  // Guardamos la URL corregida de la imagen
+                };
+    
+                // Crear el evento
+                const evento = await Evento.create(eventoData);
+    
+                // Crear las entradas en bulk
+                const entradas = [];
+                for (let i = 0; i < cantidadEntradas; i++) {
+                    entradas.push({
+                        precio: precioEntradas,
+                        disponible: true,
+                        numero_ticket: i + 1,
+                        fecha_emision: null,
+                        numero_recibo: null,
+                        id_usuario: null,
+                        id_evento: evento.id,
+                    });
+                }
+    
+                // Guardar las entradas en la base de datos
+                await Entrada.bulkCreate(entradas);
+    
+                // Responder con éxito
+                return res.status(200).json({ state: true, data: evento });
+            } catch (error) {
+                console.error('Error al guardar un evento:', error);
+                return res.status(500).json({ state: false, error: error.message });
             }
-            const lugar = await Lugar.findByPk(req.body.id_lugar);
-            const creador = await Persona.findByPk(req.body.id_creador);
-
-            if (!lugar) {
-                return res.status(404).json({ state: false, message: "Lugar no encontrado" });
-            }
-            if (!creador || creador.rol === "Usuario") {
-                return res.status(404).json({ state: false, message: "Creador del evento no encontrado" });
-            }
-
-            // Eliminar los espacios y asegurar que no haya doble slash en la URL
-            const imagenPrincipal = req.file 
-                ? `/uploads/${req.file.filename.replace(/\s+/g, '_').replace(/^\/+/, '')}`  // Reemplazamos los espacios por "_"
-                : null;
-
-            const eventoData = {
-                ...req.body,
-                imagen_principal: imagenPrincipal, // Guardamos la URL corregida
-            };
-            if (req.body.fecha_inicio>req.body.fecha_fin) {
-                return res.status(500).json({ state: false, message: "La fecha de inicio no puede ser posterior a la fecha de fin" });
-            }
-            const total=await calculoentradas(req.body.id_lugar,req.body.fecha_inicio,req.body.fecha_fin);
-            if(cantidadEntradas>total.totalentradas){
-                return res.status(500).json({ state: false, message: "el aforo maximo es de " + total.totalentradas });
-            }
-
-            const entradas = [];
-            const evento = await Evento.create(eventoData);
-            for (let i = 0; i < cantidadEntradas; i++) {
-                entradas.push({
-                    precio: precioEntradas,
-                    disponible: true,
-                    numero_ticket: i+1,
-                    fecha_emision: null,
-                    numero_recibo:null,
-                    id_usuario: null,
-                    id_evento: evento.id, 
-                });
-            }
-
-            await Entrada.bulkCreate(entradas);
-
-            return res.status(200).json({ state: true, data: evento });
-        } catch (error) {
-            console.error('Error al guardar un evento:', error);
-            return res.status(500).json({ state: false, error: error.message });
-        }
-    });
-},
+        });
+    },
+    
+    
 
     findById: async (req, res) => {
         try {
@@ -190,11 +224,8 @@ const eventoController = {
                     return res.status(404).json({ state: false, message: "Lugar no encontrado" });
                 }
     
-                // Validar si el creador existe y tiene permisos adecuados
-                const creador = await Persona.findByPk(req.body.id_creador);
-                if (!creador || creador.rol === "Usuario") {
-                    return res.status(404).json({ state: false, message: "Creador del evento no encontrado" });
-                }
+                
+               
     
                 // Preparar datos para actualizar
                 const datosActualizados = {

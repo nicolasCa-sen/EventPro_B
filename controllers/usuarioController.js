@@ -1,11 +1,52 @@
 const Persona=require('./../models/persona');
 const Solicitud=require('./../models/solicitud');
 const { differenceInYears } = require('date-fns');
+const { Op } = require('sequelize');
+
 rolNecesario="Usuario";
 
 const usuarioController = {
 
- 
+ findByEmail : async (req, res) => {
+        try {
+            const { email } = req.body; // Obtén el correo electrónico del cuerpo de la solicitud
+    
+            if (!email) {
+                return res.status(400).json({
+                    state: false,
+                    message: "Correo electrónico es obligatorio"
+                });
+            }
+    
+            // Buscar al usuario por su correo electrónico
+            const usuario = await Persona.findOne({
+                where: { email: { [Op.eq]: email } } // Usamos Op.eq para comparar exactamente el correo
+            });
+    
+            if (!usuario) {
+                return res.status(404).json({
+                    state: false,
+                    message: "Usuario no encontrado"
+                });
+            }
+    
+            console.log(usuario.id);
+            // Si el usuario existe, devolver el id
+            return res.status(200).json({
+                state: true,
+                id: usuario.id // Retornamos solo el id
+            });
+        } catch (error) {
+            console.error('Error al buscar el usuario por correo:', error);
+            return res.status(500).json({
+                state: false,
+                error: error.message
+            });
+        }
+    },
+    
+    
+    
     registrarse: async (req, res) => {
         try {
             const { rol } = req.body;  // Obtén el rol desde el cuerpo de la solicitud

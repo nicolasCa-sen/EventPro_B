@@ -6,14 +6,16 @@ const {
     findById,
     select,
     solicitudCredencial,
-    deleteus
+    deleteus,
+    findByEmail
 } = require ('./../controllers/usuarioController')
 
 routes.get('/usuarios', select);
-routes.post("/",registrarse)
-routes.get("/:id",findById)
-routes.put("/:id",updateUsuario)
+routes.post("/",registrarse);
+routes.get("/:id",findById);
+routes.put("/:id",updateUsuario);
 routes.post("/solicitud",solicitudCredencial);
-routes.delete("/:id",deleteus)
+routes.delete("/:id",deleteus);
+routes.post('/find-by-email', findByEmail);
 
 module.exports = routes;
