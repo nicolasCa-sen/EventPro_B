@@ -1,11 +1,11 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const Persona = require('../models/persona');  // Importamos el modelo Persona
+const Persona = require('../models/persona'); // Importamos el modelo Persona
 
 const loginUsuario = async (req, res) => {
-  console.log('Datos recibidos del frontend:', req.body);  // Para depurar
+  console.log('Datos recibidos del frontend:', req.body); // Para depurar
 
-  const { email, password, role } = req.body; // Asegúrate de que estas claves coinciden con las enviadas desde el frontend
+  const { email, password, role } = req.body; // Extrae los datos del request
 
   try {
     // Verificar que los datos existen
@@ -21,7 +21,15 @@ const loginUsuario = async (req, res) => {
     }
 
     // Verificar la contraseña
-    const validPassword = await bcrypt.compare(password, usuario.contraseña);
+    let validPassword = false;
+
+    // Intentar comparar como hash
+    if (usuario.contraseña.startsWith('$2')) { // Verifica si parece una contraseña encriptada
+      validPassword = await bcrypt.compare(password, usuario.contraseña);
+    } else {
+      // Comparar directamente en texto plano (no recomendado para producción)
+      validPassword = password === usuario.contraseña;
+    }
 
     if (!validPassword) {
       return res.status(400).json({ state: false, message: 'Contraseña incorrecta' });
@@ -34,11 +42,11 @@ const loginUsuario = async (req, res) => {
 
     // Crear un JWT (token)
     const token = jwt.sign(
-        { id: usuario.id, email: usuario.email, rol: usuario.rol }, // El rol está aquí
-        'tu_clave_secreta', // Clave secreta
-        { expiresIn: '1h' }  // Expiración del token (1 hora)
-      );
-      
+      { id: usuario.id, email: usuario.email, rol: usuario.rol }, // Datos del token
+      'tu_clave_secreta', // Clave secreta
+      { expiresIn: '1h' } // Tiempo de expiración
+    );
+
     // Crear un objeto con todos los datos del usuario
     const userData = {
       id: usuario.id,
@@ -49,19 +57,19 @@ const loginUsuario = async (req, res) => {
       identificacion: usuario.identificacion,
       fechaNacimiento: usuario.fechaNacimiento,
       rol: usuario.rol,
-      imagen: usuario.imagen,  // Si tienes una imagen de perfil en la base de datos
-      eventosMes: usuario.eventosMes,  // Esto puede ser dinámico, dependiendo de tu base de datos
-      eventosAno: usuario.eventosAno,  // Lo mismo para los eventos
-      gastoMes: usuario.gastoMes,  // Igualmente, lo puedes agregar dependiendo de tus necesidades
-      gastoAno: usuario.gastoAno,  // Lo mismo para los gastos
+      imagen: usuario.imagen, // Si tienes una imagen de perfil
+      eventosMes: usuario.eventosMes, // Agregar dinámicamente si es necesario
+      eventosAno: usuario.eventosAno,
+      gastoMes: usuario.gastoMes,
+      gastoAno: usuario.gastoAno,
     };
 
     // Enviar los datos del usuario junto con el token
     res.status(200).json({
       state: true,
       message: 'Login exitoso',
-      token: token,  // El token JWT
-      user: userData  // Los datos completos del usuario
+      token: token, // El token JWT
+      user: userData, // Datos completos del usuario
     });
   } catch (error) {
     console.error('Error al realizar login:', error);

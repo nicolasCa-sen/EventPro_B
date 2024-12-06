@@ -45,8 +45,6 @@ const usuarioController = {
         }
     },
     
-    
-    
     registrarse: async (req, res) => {
         try {
             const { rol } = req.body;  // Obtén el rol desde el cuerpo de la solicitud
