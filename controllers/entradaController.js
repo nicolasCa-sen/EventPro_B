@@ -2,6 +2,8 @@ const Entrada=require('./../models/entrada');
 const Evento = require('./../models/evento');
 const Usuario= require('./../models/persona');
 const crypto = require('crypto');
+const sequelize = require('../drivers/connect_db');
+
 
 function generarRecibo() {
     // Generar un buffer aleatorio de 6 bytes y convertirlo en una cadena alfanumérica en base64
@@ -172,7 +174,72 @@ const entradaController = {
             console.error('Error al calcular el total:', error);
             return res.status(500).json({ "state": false, "error": error.message });
         }
-    }
+    },
+    eventosYEntradasPorUsuario: async (req, res) => {
+        try {
+            const { id_usuario } = req.params;
+    
+            // Verificar si el usuario existe
+            const usuario = await Usuario.findByPk(id_usuario);
+            if (!usuario) {
+                return res.status(404).json({ state: false, message: "El usuario no existe." });
+            }
+    
+            // Consultar solo el id_evento y la cantidad de entradas por usuario
+            const entradas = await Entrada.findAll({
+                where: { id_usuario },
+                attributes: ['id_evento', [sequelize.fn('COUNT', sequelize.col('id')), 'cantidad_entradas']],
+                group: ['id_evento'], // Agrupar por id_evento
+            });
+    
+            // Si no tiene entradas registradas
+            if (entradas.length === 0) {
+                return res.status(200).json({ state: true, message: "El usuario no ha asistido a ningún evento.", data: [] });
+            }
+    
+            // Formatear la respuesta con id_evento y cantidad_entradas
+            const resultados = entradas.map((entrada) => ({
+                id_evento: entrada.id_evento,
+                cantidad_entradas: entrada.dataValues.cantidad_entradas,
+            }));
+    
+            return res.status(200).json({
+                state: true,
+                message: "Datos obtenidos exitosamente.",
+                data: resultados,
+            });
+        } catch (error) {
+            console.error('Error al obtener eventos y entradas por usuario:', error);
+            return res.status(500).json({ state: false, error: error.message });
+        }
+    },
+    obtenerEventoCompleto : async (req, res) => {
+        try {
+            const { id_evento } = req.params;
+    
+            // Obtener todas las entradas para el evento especificado
+            const entradas = await Entrada.findAll({
+                where: { id_evento },
+            });
+    
+            // Verificar si existen entradas para el evento
+            if (entradas.length === 0) {
+                return res.status(404).json({ state: false, message: "No se encontraron entradas para este evento." });
+            }
+    
+            // Respuesta exitosa con toda la información de las entradas
+            return res.status(200).json({
+                state: true,
+                message: "Entradas obtenidas correctamente.",
+                data: entradas
+            });
+        } catch (error) {
+            console.error('Error al obtener las entradas del evento:', error);
+            return res.status(500).json({ state: false, error: error.message });
+        }
+    },
+    
+    
 
 };
 

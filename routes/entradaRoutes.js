@@ -7,7 +7,9 @@ const {
     cambiosVenta,
     select,
     obtenerTotal,
-    obtenerPrecio
+    obtenerPrecio,
+    eventosYEntradasPorUsuario,
+    obtenerEventoCompleto
 } = require ('./../controllers/entradaController')
 const { route } = require('./eventoRoutes')
 
@@ -19,6 +21,7 @@ routes.get("/precio/:id_evento",obtenerPrecio)
 routes.post("/",save)
 routes.put("/:id",cambiosSinCompra)
 routes.put("/",cambiosVenta)
-
+routes.get("/usuario/:id_usuario/eventos-entradas", eventosYEntradasPorUsuario);
+routes.get('/evento/:id_evento/recibo-completo', obtenerEventoCompleto);
 
 module.exports = routes; 
